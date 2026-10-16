@@ -435,6 +435,9 @@ a{color:inherit}
   border:2px solid var(--bg)}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
 
+/* 搜索关键词高亮 */
+.card__title mark,.card__desc mark,.card__cat mark{background:rgba(228,0,43,.18);color:inherit;border-radius:3px;padding:0 1px}
+
 </style>
 </head>
 <body>
@@ -453,7 +456,7 @@ a{color:inherit}
 
     <div class="search" role="search">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>
-      <input id="q" type="search" placeholder="搜索作品名、品牌、品类、团队…" autocomplete="off" spellcheck="false">
+      <input id="q" type="search" placeholder="搜索作品名、品牌、团队、品类、简介（中英文均可，空格分隔多关键词）" autocomplete="off" spellcheck="false">
       <button class="search__clear" id="qClear" type="button" aria-label="清空搜索">清空</button>
     </div>
 
@@ -648,6 +651,20 @@ a{color:inherit}
     });
   };
   var smallUrl = function (u) { return (u || '').replace('size=large', 'size=small'); };
+
+  /* 关键词高亮：先转义再套 mark，避免注入 */
+  function hl(s) {
+    var t = esc(s == null ? '' : s);
+    if (!state.q) return t;
+    var qs = state.q.split(/\s+/).filter(function (x) { return x; });
+    qs.forEach(function (q) {
+      var eq = esc(q);
+      if (!eq) return;
+      var re = new RegExp(eq.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      t = t.replace(re, function (m) { return '<mark>' + m + '</mark>'; });
+    });
+    return t;
+  }
 
   /* ------------------------------------------------------------------ 载入 */
   function loadData() {
@@ -940,13 +957,25 @@ a{color:inherit}
       items = items.filter(function (i) { return i.countryZh === state.country; });
     }
     if (state.q) {
-      var q = state.q;
+      var qs = state.q.split(/\s+/).filter(function (x) { return x; });
       items = items.filter(function (i) {
-        return (i.title + ' ' + i.productType + ' ' + i.productTypeZh + ' ' +
-          i.category + ' ' + i.categoryZh + ' ' + i.fine + ' ' + i.fineZh + ' ' +
-          i.countryZh + ' ' +
-          i.credits.map(function (c) { return c.value; }).join(' ') + ' ' +
-          (i.statementZh || '')).toLowerCase().indexOf(q) > -1;
+        var hay = [
+          i.title, i.titleZh, i.headline, i.headlineZh,
+          i.productType, i.productTypeZh,
+          i.category, i.categoryZh, i.fine, i.fineZh,
+          i.countryZh, i.sourceZh, i.awardZh, i.award,
+          i.statement, i.statementZh,
+          i.credits.map(function (c) { return c.value + ' ' + (c.labelZh || ''); }).join(' ')
+        ].join(' ').toLowerCase();
+        // 多个关键词用空格分隔，要求全部命中；
+        // 一两个字的关键字（如 if、UI）按整词匹配，避免命中 different、gift 这类含该字母串的词
+        return qs.every(function (q) {
+          if (q.length <= 2) {
+            var esc2 = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return new RegExp('(^|[^a-z0-9])' + esc2 + '([^a-z0-9]|$)', 'i').test(hay);
+          }
+          return hay.indexOf(q) > -1;
+        });
       });
     }
     if (state.sort === 'title') {
@@ -1153,8 +1182,8 @@ a{color:inherit}
       '<div class="card__body">' +
       '<p class="card__cat">' + esc(it.categoryZh || it.category) +
       (it.productTypeZh ? ' · ' + esc(it.productTypeZh) : '') + '</p>' +
-      '<h3 class="card__title">' + esc(it.title) + '</h3>' +
-      '<p class="card__desc">' + esc(zh || '—') + '</p>' +
+      '<h3 class="card__title">' + hl(it.title) + '</h3>' +
+      '<p class="card__desc">' + hl(zh || '—') + '</p>' +
       '<p class="card__foot"><span class="card__src">' + esc(it.sourceZh || '') + '</span>' +
       '<span class="card__team">' + esc(team.split(',')[0] || '—') + '</span>' +
       (it.countryZh ? '<span class="card__flag">' + esc(it.countryZh) + '</span>' : '') +
