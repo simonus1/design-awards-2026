@@ -976,7 +976,7 @@ a{color:inherit}
     var n = items.length;
     $('#resultCount').innerHTML = '共 <b>' + n + '</b> 件作品' +
       (state.view === 'gold'
-        ? '（最高荣誉：红点最佳设计奖 / 优良设计大赏与金奖 / IDEA 金奖）'
+        ? '（最高荣誉：红点最佳设计奖 / iF 金奖 / 优良设计大赏与金奖 / IDEA 金奖）'
         : '');
     $('#empty').hidden = n > 0;
     if (!n) return;
@@ -1195,6 +1195,7 @@ a{color:inherit}
     requestAnimationFrame(function () { s.classList.add('on'); });
 
     var goldLabel = it.source === 'red-dot' ? '金奖 Best of the Best'
+      : it.source === 'if-design' ? 'iF 金奖'
       : it.source === 'good-design' ? '优良设计大赏 / 金奖'
       : 'IDEA 金奖';
 
@@ -1232,6 +1233,7 @@ a{color:inherit}
       : '<div><dt>—</dt><dd>官网未列出团队信息</dd></div>';
 
     var linkName = it.source === 'red-dot' ? '红点官方页面'
+      : it.source === 'if-design' ? 'iF 官方页面'
       : it.source === 'good-design' ? '优良设计奖官方页面' : 'IDEA 官方页面';
     var links = '<a href="' + esc(it.url) + '" target="_blank" rel="noopener">' + esc(linkName) + '</a>';
     if (it.web) links += '<a href="' + esc(it.web) + '" target="_blank" rel="noopener">品牌官网</a>';
