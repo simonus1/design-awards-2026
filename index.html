@@ -621,7 +621,7 @@ a{color:inherit}
 
   var DATA = null;
   var state = {
-    view: 'gold',
+    view: 'all',
     q: '',
     sources: new Set(),
     comps: new Set(),
@@ -797,6 +797,7 @@ a{color:inherit}
       var v = b.dataset.src;
       toggle(state.sources, v);
       b.setAttribute('aria-pressed', state.sources.has(v));
+      if (state.view === 'gold') state.view = 'all';   // 切换奖项时回到全部视图，避免金奖为空
       render();
     });
     $('#fgCompetition').addEventListener('click', function (e) {
